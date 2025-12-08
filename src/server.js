@@ -5,8 +5,12 @@ import dotenv from "dotenv";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import path from "path";
 dotenv.config();
+
+// Fix ESM dirname (ONLY ONCE at the top)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import analyticsRoute from "./routes/hod/analytics.js";
 
@@ -53,12 +57,6 @@ import authCheckProfile from "./routes/auth/check-profile.js";
 import authCreateProfile from "./routes/auth/create-profile.js";
 import { query } from "./config/db.js";
 import chatbotRoute from "./routes/chatbot.js";
-
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 // CORS configuration - allow credentials and all origins for now
@@ -162,9 +160,7 @@ export default app;
 // Run migration on startup (non-blocking)
 async function runStartupMigrations() {
   try {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    const migrationPath = join(__dirname, '..', 'sql', '011_add_stipend_to_placement_posts.sql');
+    const migrationPath = path.join(__dirname, '..', 'sql', '011_add_stipend_to_placement_posts.sql');
     
     try {
       const migrationSQL = readFileSync(migrationPath, 'utf8');
