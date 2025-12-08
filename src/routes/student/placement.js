@@ -59,26 +59,33 @@ router.get("/posts", requireAuth, async (req, res) => {
 
     const r = await query(sql, params);
     
+    console.log(`[placement-posts] Found ${r.rows.length} total posts for student ${studentId}`);
+    console.log(`[placement-posts] Student dept: ${studentDept}, GPA: ${studentGPA}, Year: ${studentYear}`);
+    
     // Filter by eligibility criteria
     const eligiblePosts = r.rows.filter(post => {
       // Check department eligibility
-      if (post.eligible_departments && post.eligible_departments.length > 0) {
+      if (post.eligible_departments && Array.isArray(post.eligible_departments) && post.eligible_departments.length > 0) {
         if (!post.eligible_departments.includes(studentDept)) {
+          console.log(`[placement-posts] Post ${post.id} filtered: department mismatch (${post.eligible_departments} vs ${studentDept})`);
           return false;
         }
       }
 
-      // Check GPA eligibility
-      if (post.min_gpa && studentGPA < post.min_gpa) {
+      // Check GPA eligibility (only if student has GPA and post requires it)
+      if (post.min_gpa && studentGPA > 0 && studentGPA < post.min_gpa) {
+        console.log(`[placement-posts] Post ${post.id} filtered: GPA too low (${studentGPA} < ${post.min_gpa})`);
         return false;
       }
 
-      // Check year eligibility
+      // Check year eligibility (only if student has year and post requires it)
       if (studentYear !== null) {
         if (post.min_year && studentYear < post.min_year) {
+          console.log(`[placement-posts] Post ${post.id} filtered: year too low (${studentYear} < ${post.min_year})`);
           return false;
         }
         if (post.max_year && studentYear > post.max_year) {
+          console.log(`[placement-posts] Post ${post.id} filtered: year too high (${studentYear} > ${post.max_year})`);
           return false;
         }
       }
@@ -86,6 +93,7 @@ router.get("/posts", requireAuth, async (req, res) => {
       return true;
     });
 
+    console.log(`[placement-posts] Returning ${eligiblePosts.length} eligible posts`);
     res.json({ posts: eligiblePosts });
   } catch (err) {
     console.error("placement posts error:", err);
