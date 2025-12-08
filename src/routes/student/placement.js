@@ -35,10 +35,15 @@ router.get("/posts", requireAuth, async (req, res) => {
     let paramCount = 0;
 
     // Filter by active status
-    if (active) {
+    // Default to showing active posts if active filter is not explicitly "0"
+    if (active && active !== "0") {
       sql += ` AND (active = true OR active IS NULL) AND (deadline IS NULL OR deadline > NOW())`;
+    } else if (active === "0") {
+      // Show all posts (active and inactive) when active=0
+      // No additional filter
     } else {
-      sql += ` AND (active = true OR active IS NULL)`;
+      // Default: show active posts
+      sql += ` AND (active = true OR active IS NULL) AND (deadline IS NULL OR deadline > NOW())`;
     }
 
     // Filter by type
